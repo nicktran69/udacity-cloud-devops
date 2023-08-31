@@ -1,0 +1,60 @@
+Description: >
+  Jump  host to support trouble shooting AppServers
+  
+Parameters: 
+  EnvironmentName:
+    Type: String
+    Default: UdacityProject
+  AMI:
+    Description: 'an AMI in the us-east-1 region'
+    Type: String
+    Default: ami-011e48799a29115e9
+  InstanceType:
+    Type: String
+    Default: t2.micro
+  KeyName:
+    Description: 'Existing ssh key pair attach in Jump host'
+    Type: String
+    Default: udacity-ec2-ppk-key
+    ConstraintDescription: Must be an existing keypair
+
+Resources:
+  JumphostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Jump host security group
+      VpcId: 
+        Fn::ImportValue:
+          !Sub ${EnvironmentName}-VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp 
+          CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+      SecurityGroupEgress:
+        - IpProtocol: tcp 
+          CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+
+  JumphostInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMI
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref JumphostSecurityGroup
+      SubnetId: 
+        Fn::ImportValue:
+           !Sub ${EnvironmentName}-PUB1-SN
+
+Outputs:
+  JumphostSecurityGroup:
+    Description: Jumphost Security Group
+    Value: 
+      !GetAtt
+          - JumphostSecurityGroup
+          - GroupId
+    Export:
+      Name: !Sub ${EnvironmentName}-Jumphost-Security-Group
