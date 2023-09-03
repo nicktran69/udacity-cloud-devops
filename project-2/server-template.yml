@@ -6,11 +6,6 @@ Parameters:
     EnvironmentName:
       Description: Environemnt parameters
       Type: String
-    KeyName:
-      Description: 'Key name for existing ssh key pair'
-      Type: String
-      Default: ec2-groups
-      ConstraintDescription: Must be an existing keypair
 
 Resources:
   LoadBalancerSecGroup:
@@ -60,14 +55,14 @@ Resources:
           sudo apt-get update -y
           sudo apt-get install apache2 -y
           sudo systemctl start apache2.service
-          cd /var/www/html
-          sudo chmod 777 index.html
-          sudo echo "Udacity Demo Web Server Up and Running!" > index.html
+          sudo rm /var/www/html/index.html
+          sudo aws s3 cp s3://udagram-demo/udagram.zip /var/www/html
+          sudo unzip /var/www/html/udagram.zip -d /var/www/html
+          systemctl restart apache2.service
       ImageId: ami-011e48799a29115e9
       SecurityGroups:
       - Ref: WebServerSecGroup
       InstanceType: t2.micro
-      KeyName: !Ref KeyName
       BlockDeviceMappings:
       - DeviceName: "/dev/sdk"
         Ebs:
