@@ -106,7 +106,13 @@ jobs:
       # Checkout code from git
       - checkout
       # Restore from cache
-      # Your job code here
+      - run:
+          name: Scan Frontend
+          command: |
+            cd frontend
+            npm install
+            npm audit fix --audit-level=critical
+
 
   scan-backend:
     docker:
@@ -116,7 +122,13 @@ jobs:
       # Checkout code from git
       - checkout
       # Restore from cache
-      # Your job code here
+      - run:
+          name: Scan Backend
+          command: |
+            cd backend
+            npm install
+            npm audit fix --audit-level=critical
+
 
   deploy-infrastructure:
     docker:
