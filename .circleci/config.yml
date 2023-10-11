@@ -359,4 +359,4 @@ workflows:
       - cleanup:
           requires: [cloudfront-update]
       - notify:
-          context: xoxb-6018943134069-6034636202705-fy3j0ZNcKSQzBMt3ITlX37bp
+          context: Slack
