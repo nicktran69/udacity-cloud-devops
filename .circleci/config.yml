@@ -48,6 +48,10 @@ jobs:
             cd frontend
             npm install
             npm run build
+      - run:
+          name: Setup Environment Variables
+          command: |
+            echo 'export PATH=/tmp/.bash_env-65278c461e575677e9d81ab4-0-build:"$PATH"' >> "$BASH_ENV"
       - slack/notify:
           event: fail
           template: basic_fail_1
