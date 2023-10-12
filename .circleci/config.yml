@@ -50,9 +50,11 @@ jobs:
             npm run build
       - slack/notify:
           event: fail
+          channel: personal
           template: basic_fail_1
       - slack/notify:
           event: pass
+          channel: personal
           template: success_tagged_deploy_1
       - save_cache:
           paths: [frontend/node_modules]
