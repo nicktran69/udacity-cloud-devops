@@ -1,5 +1,6 @@
 version: 2.1
 orbs:
+  node: circleci/node:4.1
   slack: circleci/slack@4.1
 
 commands:
@@ -35,28 +36,6 @@ commands:
             fi
             
 jobs:
-  notify:
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - slack/notify:
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "plain_text",
-                      "text": "*This is a text notification*",
-                      "emoji": true
-                    }
-                  ]
-                }
-              ]
-            }
-          event: always
-
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -70,6 +49,10 @@ jobs:
             cd frontend
             npm install
             npm run build
+      - slack/notify:
+          channel: general
+          event: always
+          template: basic_fail_1
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
