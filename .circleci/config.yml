@@ -37,7 +37,7 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       - checkout
       - restore_cache:
@@ -48,10 +48,6 @@ jobs:
             cd frontend
             npm install
             npm run build
-      - run:
-          name: Setup Environment Variables
-          command: |
-            echo 'export PATH=/tmp/.bash_env-65278c461e575677e9d81ab4-0-build:"$PATH"' >> "$BASH_ENV"
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -64,7 +60,7 @@ jobs:
 
   build-backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       - checkout
       - restore_cache:
@@ -81,7 +77,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       # Checkout code from git
       - checkout
@@ -97,7 +93,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       # Checkout code from git
       - checkout
@@ -113,7 +109,7 @@ jobs:
   scan-frontend:
     docker:
       # Docker image here
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       # Checkout code from git
       - checkout
@@ -129,7 +125,7 @@ jobs:
   scan-backend:
     docker:
       # Docker image here
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       # Checkout code from git
       - checkout
@@ -200,7 +196,7 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: circleci/node:13.8.0
+      - image: cimg/node:16.9.1
     steps:
       # Checkout code from git
       - run:
