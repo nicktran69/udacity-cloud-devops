@@ -8,14 +8,14 @@ commands:
           name: Delete S3 content
           when: on_fail
           command: |
-            aws s3 rm s3://udapeople-udapeople-kk1j287eryppmz437 --recursive
+            aws s3 rm s3://udapeople-kk1j287eryppmz437 --recursive
             exit 0
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name backend-udapeople-kk1j287eryppmz437
-            aws cloudformation delete-stack --stack-name frontend-udapeople-kk1j287eryppmz437
+            aws cloudformation delete-stack --stack-name udapeople-backend-kk1j287eryppmz437
+            aws cloudformation delete-stack --stack-name udapeople-frontend-kk1j287eryppmz437
             exit 0
 
   revert-migrations:
@@ -149,9 +149,9 @@ jobs:
             # Use the workflow id to mark your CloudFormation stacks so that you can reference them later on (ex: rollback). 
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udapeople-udapeople-kk1j287eryppmz437 \
-              --stack-name backend-udapeople-kk1j287eryppmz437 \
-              --parameter-overrides ID=udapeople-kk1j287eryppmz437
+              --tags project=udapeople \
+              --stack-name "udapeople-backend-kk1j287eryppmz437" \
+              --parameter-overrides ID="udapeople-kk1j287eryppmz437"
 
       - run:
           name: Ensure front-end infrastructure exists
@@ -159,12 +159,12 @@ jobs:
             # Use the workflow id to mark your CloudFormation stacks so that you can reference them later on (ex: rollback). 
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople-udapeople-kk1j287eryppmz437 \
-              --stack-name frontend-udapeople-kk1j287eryppmz437 \
-              --parameter-overrides ID=udapeople-kk1j287eryppmz437
+              --tags project=udapeople \
+              --stack-name "udapeople-frontend-kk1j287eryppmz437" \
+              --parameter-overrides ID="udapeople-kk1j287eryppmz437"
 
       - run:
-          name: Add back-end ip to ansible inventoryx
+          name: Add back-end ip to ansible inventory
           command: |
             aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
