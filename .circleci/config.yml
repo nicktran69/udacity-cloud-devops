@@ -3,6 +3,10 @@ version: 2.1
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      # Add parameter
+      workflow_id:
+         type: string
     steps:
       - run:
           name: Delete S3 content
@@ -168,14 +172,16 @@ jobs:
           command: |
             aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --filters "Name=tag:Name,Values=udapeople-backend-kk1j287eryppmz437" \
             --output text >> ~/project/.circleci/ansible/inventory.txt
             cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: udapeople-kk1j287eryppmz437
 
   configure-infrastructure:
     docker:
