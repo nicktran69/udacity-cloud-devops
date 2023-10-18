@@ -33,7 +33,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            SUCCESS=$(curl --insecure  https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            SUCCESS=$(curl --insecure  https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_kk1j287eryppmz437)
             if (($SUCCESS == 1))
             then
               cd ~/project/backend
@@ -153,7 +153,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
               --stack-name "udapeople-backend-kk1j287eryppmz437" \
-              --parameter-overrides ID="udapeople-kk1j287eryppmz437"
+              --parameter-overrides ID="kk1j287eryppmz437"
 
       - run:
           name: Ensure front-end infrastructure exists
@@ -163,14 +163,14 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
               --stack-name "udapeople-frontend-kk1j287eryppmz437" \
-              --parameter-overrides ID="udapeople-kk1j287eryppmz437"
+              --parameter-overrides ID="kk1j287eryppmz437"
 
       - run:
           name: Add back-end ip to ansible inventory
           command: |
             aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=udapeople-backend-kk1j287eryppmz437" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text >> ~/project/.circleci/ansible/inventory.txt
             cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
@@ -179,7 +179,7 @@ jobs:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
 
   configure-infrastructure:
     docker:
@@ -209,7 +209,7 @@ jobs:
           no_output_timeout: 30m
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
 
   run-migrations:
     docker:
@@ -238,11 +238,11 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-                curl --insecure https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_udapeople-kk1j287eryppmz437 -d '1'
+                curl --insecure https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_kk1j287eryppmz437 -d '1'
             fi
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
 
   deploy-frontend:
     docker:
@@ -265,7 +265,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=udapeople-backend-kk1j287eryppmz437" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL=${API_URL}"
@@ -282,9 +282,9 @@ jobs:
 
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
       - revert-migrations:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
 
   deploy-backend:
     docker:
@@ -340,9 +340,9 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
       - revert-migrations:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
 
   smoke-test:
     docker:
@@ -361,7 +361,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=udapeople-backend-kk1j287eryppmz437" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text)
             echo ${BACKEND_IP}
 
@@ -396,9 +396,9 @@ jobs:
             fi
 
       - destroy-environment:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
       - revert-migrations:
-          workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: kk1j287eryppmz437
 
   cloudfront-update:
     docker:
