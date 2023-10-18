@@ -373,7 +373,7 @@ jobs:
             echo "API_URL=${API_URL}"
 
             echo "Sleeping for 1 minute"
-            sleep 60
+            sleep 600
 
             if curl -v "${API_URL}/api/status" | grep "ok"
             then
