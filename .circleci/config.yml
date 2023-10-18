@@ -6,7 +6,7 @@ commands:
     parameters:
       # Add parameter
       workflow_id:
-         type: string
+        type: string
     steps:
       - run:
           name: Delete S3 content
@@ -25,22 +25,23 @@ commands:
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      # Add parameter here     
+      # Add parameter here
+      workflow_id:
+        type: string
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
+          when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
-            if(( $SUCCESS==1 )); 
+            SUCCESS=$(curl --insecure  https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            if (($SUCCESS == 1))
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+              cd ~/project/backend
+              npm install
+              npm run build
+              npm run migrations:revert
             fi
-            
+
 jobs:
   build-frontend:
     docker:
@@ -69,9 +70,9 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             cd backend
-             npm install
-             npm run build
+            cd backend
+            npm install
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
@@ -85,12 +86,11 @@ jobs:
       # Restore from cache
       # Your job code here
       - run:
-         name: Run frontend test
-         command: |
-           cd frontend
-           npm install
-           npm run test
-
+          name: Run frontend test
+          command: |
+            cd frontend
+            npm install
+            npm run test
 
   test-backend:
     docker:
@@ -101,11 +101,11 @@ jobs:
       # Restore from cache
       # Your job code here
       - run:
-         name: Run backend test
-         command: |
-           cd backend
-           npm install
-           npm run test
+          name: Run backend test
+          command: |
+            cd backend
+            npm install
+            npm run test
 
   scan-frontend:
     docker:
@@ -122,7 +122,6 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
 
-
   scan-backend:
     docker:
       # Docker image here
@@ -137,7 +136,6 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
-
 
   deploy-infrastructure:
     docker:
@@ -192,7 +190,7 @@ jobs:
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
-         fingerprints:
+          fingerprints:
             - "88:29:8f:f9:17:a5:55:5d:22:6a:6e:77:c7:7f:3d:e5:44:06:7a:0e"
       # attach workspace
       - attach_workspace:
@@ -242,9 +240,9 @@ jobs:
             then
                 curl --insecure https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_udapeople-kk1j287eryppmz437 -d '1'
             fi
-     # Here's where you will add some code to rollback on failure
+      # Here's where you will add some code to rollback on failure
       - destroy-environment:
-            workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: udapeople-kk1j287eryppmz437
 
   deploy-frontend:
     docker:
@@ -280,14 +278,14 @@ jobs:
             npm install
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive 
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: udapeople-kk1j287eryppmz437
       - revert-migrations:
-            workflow_id: udapeople-kk1j287eryppmz437
-                    
+          workflow_id: udapeople-kk1j287eryppmz437
+
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
@@ -297,7 +295,7 @@ jobs:
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
-         fingerprints:
+          fingerprints:
             - "88:29:8f:f9:17:a5:55:5d:22:6a:6e:77:c7:7f:3d:e5:44:06:7a:0e"
       # attach workspace
       - attach_workspace:
@@ -324,7 +322,7 @@ jobs:
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
-            
+
             pwd
             ls -al
             npm install
@@ -344,7 +342,7 @@ jobs:
       - destroy-environment:
           workflow_id: udapeople-kk1j287eryppmz437
       - revert-migrations:
-            workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: udapeople-kk1j287eryppmz437
 
   smoke-test:
     docker:
@@ -366,9 +364,9 @@ jobs:
             --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text)
             echo ${BACKEND_IP}
-            
+
             export BACKEND=$(echo $BACKEND_IP | grep -o '[^ ]*$')
-            
+
             echo $BACKEND
             export API_URL="http://${BACKEND}:3030"
             echo "API_URL=${API_URL}"
@@ -388,7 +386,7 @@ jobs:
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"
 
             echo ${URL}
-            
+
             if curl -s ${URL} | grep "Welcome"
             then
               # Change this to 0 after the job fails
@@ -400,7 +398,7 @@ jobs:
       - destroy-environment:
           workflow_id: udapeople-kk1j287eryppmz437
       - revert-migrations:
-            workflow_id: udapeople-kk1j287eryppmz437
+          workflow_id: udapeople-kk1j287eryppmz437
 
   cloudfront-update:
     docker:
@@ -416,7 +414,7 @@ jobs:
           name: Update cloudfront distribution
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure
 
   cleanup:
     docker:
@@ -436,7 +434,6 @@ jobs:
             then
               # your code here
             fi
-            
 
 workflows:
   default:
