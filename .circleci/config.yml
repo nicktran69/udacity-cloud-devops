@@ -201,8 +201,7 @@ jobs:
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
-          fingerprints:
-            - "ea:79:14:82:10:58:56:7f:a4:90:50:c2:88:c0:3f:55"
+          fingerprints: ["ea:79:14:82:10:58:56:7f:a4:90:50:c2:88:c0:3f:55"]
       # attach workspace
       - attach_workspace:
           at: ~/
@@ -267,12 +266,10 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar
-            apk add --update --no-cache gzip
-            apk add --update --no-cache nodejs
-            apk add --update --no-cache npm
-            apk add --update --no-cache aws-cli
-            apk add --update --no-cache curl
+            sudo apt-get update && sudo apt-get install -yy less
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Get backend url
           command: |
