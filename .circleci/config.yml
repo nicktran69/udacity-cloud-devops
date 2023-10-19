@@ -45,7 +45,7 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -62,7 +62,7 @@ jobs:
 
   build-backend:
     docker:
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -79,63 +79,75 @@ jobs:
 
   test-frontend:
     docker:
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
-      # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys: [test-frontend]
       - run:
           name: Run frontend test
           command: |
             cd frontend
             npm install
             npm run test
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: test-frontend
 
   test-backend:
     docker:
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
-      # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys: [test-backend]
       - run:
           name: Run backend test
           command: |
             cd backend
             npm install
             npm run test
+      - save_cache:
+          paths: [backend/node_modules]
+          key: test-backend
 
   scan-frontend:
     docker:
-      # Docker image here
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
-      # Restore from cache
+      - restore_cache:
+          keys: [scan-frontend]
       - run:
           name: Scan Frontend
           command: |
             cd frontend
             npm install
             npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [ frontend/node_modules ]
+          key: scan-frontend
 
   scan-backend:
     docker:
-      # Docker image here
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
-      # Restore from cache
+      - restore_cache:
+          keys: [scan-backend]
       - run:
           name: Scan Backend
           command: |
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [ backend/node_modules ]
+          key: scan-backend
 
   deploy-infrastructure:
     docker:
@@ -183,8 +195,7 @@ jobs:
 
   configure-infrastructure:
     docker:
-      # Docker image here that supports Ansible
-      - image: python:3.10-alpine3.16
+      - image: python:3.10.5-alpine3.16
     steps:
       # Checkout code from git
       - checkout
@@ -213,19 +224,19 @@ jobs:
 
   run-migrations:
     docker:
-      # Docker image here that supports NodeJS
-      - image: cimg/node:14.17.4
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
-      - restore_cache:
-          keys: [backend-build]
-
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       apk add --update --no-cache nodejs npm aws-cli
-
+      - attach_workspace:
+          at: ~/.circleci/ansible/inventory.txt
+      - run:
+          name: Install AWS CLI dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -yy less
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Run migrations
           command: |
@@ -243,10 +254,12 @@ jobs:
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: kk1j287eryppmz437
+      - revert-migrations:
+          workflow_id: kk1j287eryppmz437
 
   deploy-frontend:
     docker:
-      - image: python:3.10-alpine3.16
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - attach_workspace:
@@ -288,22 +301,20 @@ jobs:
 
   deploy-backend:
     docker:
-      # Docker image here that supports Ansible
-      - image: python:3.10-alpine3.16
+      - image: python:3.10.5-alpine3.16
     steps:
       # Checkout code from git
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
-          fingerprints:
-            - "ea:79:14:82:10:58:56:7f:a4:90:50:c2:88:c0:3f:55"
+          fingerprints: ["ea:79:14:82:10:58:56:7f:a4:90:50:c2:88:c0:3f:55"]
       # attach workspace
       - attach_workspace:
-          at: ~/
+          at: ./
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache ansible tar gzip nodejs npm curl aws-cli
+            apk add --update --no-cache tar gzip nodejs npm aws-cli curl ansible
       - run:
           name: Deploy backend
           command: |
@@ -332,12 +343,11 @@ jobs:
             ls -al
             # Zip the directory
             tar -C backend -czvf artifact.tar.gz .
-
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
-
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
-            export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
@@ -347,8 +357,7 @@ jobs:
 
   smoke-test:
     docker:
-      # Lightweight Docker image
-      - image: python:3.10-alpine3.16
+      - image: python:3.10.5-alpine3.16
     steps:
       # Checkout code from git
       - checkout
