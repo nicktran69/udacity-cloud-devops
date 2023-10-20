@@ -171,7 +171,7 @@ jobs:
             echo -e "[web]\n" > ./.circleci/ansible/inventory  
             BACKEND_IP=$(aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --filters "Name=tag:project,Values=backend-kk1j287eryppmz437" \
               --output text)
             echo "bla"
             echo $BACKEND_IP >> ./.circleci/ansible/inventory 
@@ -277,7 +277,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL=${API_URL}"
@@ -351,7 +351,7 @@ jobs:
             cd .circleci/ansible
             echo "Inventory file : "
             cat inventory
-            ansible-playbook -i inventory deploy-backend.yml --extra-vars "CIRCLE_WORKFLOW_ID=${CIRCLE_WORKFLOW_ID}"  
+            ansible-playbook -i inventory deploy-backend.yml
 
       - destroy-environment:
           workflow_id: kk1j287eryppmz437
