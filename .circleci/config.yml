@@ -170,7 +170,7 @@ jobs:
           command: |
             aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz438" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text >> ~/project/.circleci/ansible/inventory.txt
             cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
@@ -274,7 +274,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz438" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL=${API_URL}"
@@ -372,7 +372,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz438" \
+            --filters "Name=tag:Name,Values=backend-kk1j287eryppmz437" \
             --output text)
             echo ${BACKEND_IP}
 
