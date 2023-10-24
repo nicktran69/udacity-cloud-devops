@@ -158,7 +158,6 @@ jobs:
       - run:
           name: Ensure front-end infrastructure exists
           command: |
-            # Use the workflow id to mark your CloudFormation stacks so that you can reference them later on (ex: rollback). 
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
