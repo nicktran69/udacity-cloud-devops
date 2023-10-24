@@ -448,17 +448,33 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install dependencies
+          command: |
+            yum install tar gzip -y
+      - attach_workspace:
+          at: ~/
+      - run:
           name: Get old stack workflow id
           command: |
-            # your code here
-            export OldWorkflowID="the id here"
-            export STACKS=[] #put the list of stacks here
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+            echo Stack names: "${STACKS[@]}"
+            cat ~/project/OldWorkflowID.txt
+            export OldWorkflowID=$(cat ~/project/OldWorkflowID.txt)
+            echo OldWorkflowID: "${OldWorkflowID}"
       - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            export OldWorkflowID=$(cat ~/project/OldWorkflowID.txt)
+            if [[ "kk1j287eryppmz437" != "${OldWorkflowID}" ]]
             then
-              # your code here
+              echo "Deleting old stack"
+              echo "s3://udapeople-${OldWorkflowID}"
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive || true
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}" || true
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}" || true
+            else
+              echo "Stack is the latest"
             fi
 
 workflows:
