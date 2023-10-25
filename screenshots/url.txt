@@ -1,0 +1,3 @@
+URL_01: https://github.com/nicktran69/udacity-cloud-devops/tree/project-3
+
+URL_02: http://udapeople-kk1j287eryppmz437.s3-website-us-east-1.amazonaws.com/#/employees
