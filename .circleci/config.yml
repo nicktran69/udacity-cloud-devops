@@ -30,12 +30,15 @@ commands:
           when: on_fail
           command: |
             SUCCESS=$(curl --insecure  https://kvdb.io/AbaPdhZojyXT498ued9hJ9/migration_kk1j287eryppmz439)
-            if (( $SUCCESS == 1 ))
+            echo  $SUCCESS
+            if [[ $SUCCESS == 1 ]]; 
             then
+              echo "Reverting Migrations "
               cd ~/project/backend
               npm install
-              npm run build
               npm run migrations:revert
+            else 
+              echo " Revert Migration Completed"
             fi
 
 jobs:
