@@ -35,7 +35,6 @@ commands:
             then
               echo "Reverting Migrations "
               cd ~/project/backend
-              npm install
               npm run migrations:revert
             else 
               echo " Revert Migration Completed"
