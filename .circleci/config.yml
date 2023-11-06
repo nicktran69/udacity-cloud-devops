@@ -36,7 +36,7 @@ commands:
               echo "Reverting Migrations "
               cd ~/project/backend
               npm install
-              npm audit fix --audit-level=critical --force
+              npm audit fix
               npm run migrations:revert
             else 
               echo " Revert Migration Completed"
