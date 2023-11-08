@@ -372,7 +372,7 @@ jobs:
       - run:
           name: Frontend smoke test.
           command: |
-            URL="http://udapeople-kk1j287eryppmz439.fail.s3-website-us-east-1.amazonaws.com/#/employees"
+            URL="http://udapeople-kk1j287eryppmz439.s3-website-us-east-1.amazonaws.com/#/employees"
             echo ${URL}
             if curl -s ${URL} | grep "Welcome"
             then
@@ -433,7 +433,7 @@ jobs:
           name: Get old stack wf ids
           command: |
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
             echo Stack names: "${STACKS[@]}"
             cat ~/project/OldWorkflowID.txt
             export OldWorkflowID=$(cat ~/project/OldWorkflowID.txt)
