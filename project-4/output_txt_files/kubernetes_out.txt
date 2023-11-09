@@ -35,3 +35,16 @@ Handling connection for 8011
 2023-11-09 11:27:04 0     0  6.575  296.0     15.3  396.9   4.98
 2023-11-09 11:27:04 [2023-11-09 04:27:04,542] INFO in app: Ourput prediction: [20.35373177134412]
 2023-11-09 11:27:04 127.0.0.1 - - [09/Nov/2023 04:27:04] "POST /predict HTTP/1.1" 200 -
+
+
+// Prediction output
+$ ./make_prediction.sh
+Port: 8011
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   246  100    48  100   198    273   1127 --:--:-- --:--:-- --:--:--  1447{
+  "prediction": [
+    20.35373177134412
+  ]
+}
+
