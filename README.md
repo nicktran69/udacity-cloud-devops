@@ -1,42 +1,34 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/nicktran69/udacity-cloud-devops/tree/project-4.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/nicktran69/udacity-cloud-devops/tree/project-4)
 
 ## Project Overview
+This project build a AI/ML microservice app with python using CircleCI cloud to manage CI/CD pipeline.
 
-In this project, you will apply the skills you have acquired in this course to operationalize a Machine Learning Microservice API. 
+### Instruction how to build and run this app
 
-You are given a pre-trained, `sklearn` model that has been trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios, and so on. You can read more about the data, which was initially taken from Kaggle, on [the data source site](https://www.kaggle.com/c/boston-housing). This project tests your ability to operationalize a Python flask app—in a provided file, `app.py`—that serves out predictions (inference) about housing prices through API calls. This project could be extended to any pre-trained machine learning model, such as those for image recognition and data labeling.
+1. Setup Environment
+    python3 -m pip install --user virtualenv
+    python3 -m virtualenv --python=<path-to-Python3.7> .devops
+    source .devops/bin/activate
 
-### Project Tasks
+2. Run app.py
+    2.1 Run in Docker: ./run_docker.sh
+    2.2 Run in Kubernetes: ./run_kubernetes.sh
 
-Your project goal is to operationalize this working, machine learning microservice using [kubernetes](https://kubernetes.io/), which is an open-source system for automating the management of containerized applications. In this project you will:
-* Test your project code using linting
-* Complete a Dockerfile to containerize this application
-* Deploy your containerized application using Docker and make a prediction
-* Improve the log statements in the source code for this application
-* Configure Kubernetes and create a Kubernetes cluster
-* Deploy a container using Kubernetes and make a prediction
-* Upload a complete Github repo with CircleCI to indicate that your code has been tested
+3. Docker & Kubernetes steps:
+    * Setup and config Docker locally on Windows
+        - Download and install Docker desktop from:https://www.docker.com/products/docker-desktop/ and enable Kubernetes in configuration
+    * Create app in docker container, more details in run_docker.sh file
+        - docker run -p 8000:80 nhanct79/project-4-ml-microservice
+    * Create app via kubectl, more details in run_kubernetes.sh
+        - kubectl create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_PATH}
+        - kubectl port-forward pod/${POD_NAME} --address 0.0.0.0 8011:80
 
-You can find a detailed [project rubric, here](https://review.udacity.com/#!/rubrics/2576/view).
+4. Test app:
+    - run script: ./make_prediction.sh
 
-**The final implementation of the project will showcase your abilities to operationalize production microservices.**
+5. Other commands:
+    - Get pod: kubectl get pod
+    - Delete pod: kubectl delete pod <pod-name>
+    - Get deployment name: kubectl get deployments
+    - Scale down pod: kubectl scale deployment <deployment-name> --replica=0
 
----
-
-## Setup the Environment
-
-* Create a virtualenv and activate it
-* Run `make install` to install the necessary dependencies
-
-### Running `app.py`
-
-1. Standalone:  `python app.py`
-2. Run in Docker:  `./run_docker.sh`
-3. Run in Kubernetes:  `./run_kubernetes.sh`
-
-### Kubernetes Steps
-
-* Setup and Configure Docker locally
-* Setup and Configure Kubernetes locally
-* Create Flask app in Container
-* Run via kubectl

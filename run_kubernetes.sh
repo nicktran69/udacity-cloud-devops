@@ -4,8 +4,6 @@
 
 # Step 1:
 # This is your Docker ID/path
-# dockerpath=<>
-
 DEPLOYMENT_NAME="project-4-ml-app"
 DOCKER_PATH="nhanct79/project-4-ml-microservice"
 
@@ -18,12 +16,12 @@ kubectl create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_PATH}
 # List kubernetes pods
 kubectl get pods
 
-pod_name=$(kubectl get pods | grep ${DEPLOYMENT_NAME} | awk '{print $1}')
-echo "Pod name: ${pod_name}"
+POD_NAME=$(kubectl get pods | grep ${DEPLOYMENT_NAME} | awk '{print $1}')
+echo "Pod name: ${POD_NAME}"
 echo "Forwarding port..."
-sleep 30
+sleep 10
+
 # Step 4:
 # Forward the container port to a host
-kubectl port-forward pod/${pod_name} --address 0.0.0.0 8000:80
-
-sleep 10
+echo "Pod name: ${POD_NAME}"
+kubectl port-forward pod/${POD_NAME} --address 0.0.0.0 8011:80
