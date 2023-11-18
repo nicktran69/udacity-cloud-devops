@@ -1,0 +1,18 @@
+[
+    {
+		"ParameterKey": "EnvironmentName",
+		"ParameterValue": "project5"
+	},
+	{
+		"ParameterKey": "MinSize",
+		"ParameterValue": "1"
+	},
+	{
+		"ParameterKey": "MaxSize",
+		"ParameterValue": "4"
+	},
+	{
+		"ParameterKey": "DesiredSize",
+		"ParameterValue": "2"
+	}
+]

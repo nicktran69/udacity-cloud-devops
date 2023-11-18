@@ -1,0 +1,9 @@
+- name: Configure Service
+  copy:
+    src: "{{ ENVIRONMENT_NAME }}-service.yaml"
+    dest: $HOME
+
+- name: Apply Service
+  command: "./bin/kubectl apply -f {{ ENVIRONMENT_NAME }}-service.yaml"
+  args:
+    chdir: $HOME

@@ -1,0 +1,32 @@
+Parameters:
+  EnvironmentName:
+    Description: Management service
+    Default: project5
+    Type: String
+
+Resources:
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${EnvironmentName}-management-SG
+      GroupDescription: Allow port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  managementHost1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.small
+      SecurityGroups:
+        - Ref: InstanceSecurityGroup
+      KeyName: udacity2
+      ImageId: ami-095577d5f61619e4b
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-management1
+        - Key: Project
+          Value: !Ref EnvironmentName

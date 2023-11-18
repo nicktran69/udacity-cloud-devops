@@ -1,0 +1,343 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
+version: 2.1
+
+executors:
+  docker:
+    docker:
+      - image: docker:stable
+
+jobs:
+  build-backend:
+    docker:
+      - image: maven:3.5-jdk-8
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [build-backend]
+      - run:
+          name: Back-end build
+          command: |
+            cd backend
+            mvn clean install
+      - save_cache:
+          paths: [backend/target]
+          key: build-backend
+
+  scan-backend:
+    docker:
+      - image: maven:3.5-jdk-8
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [ build-backend ]
+      - run:
+          name: Back-end build
+          command: |
+            cd backend
+            mvn clean install checkstyle:check
+
+  lint-check:
+    executor: docker
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Run hadolint check Dockerfile
+          command: |
+            cd backend
+            echo "Linting Dockerfile"
+            docker run --rm --interactive hadolint/hadolint < Dockerfile
+
+#  lint-check:
+#    docker:
+#      - image: python:3.7.3-stretch
+#
+#    steps:
+#      - checkout
+#
+#      # Download and cache dependencies
+#      - restore_cache:
+#          keys:
+#            - linter
+#
+#      # make install
+#      - run:
+#          name: active env
+#          command: |
+#            cd backend
+#
+#            . venv/bin/activate
+#
+#            # Install hadolint
+#            wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&\
+#            chmod +x /bin/hadolint
+#
+#            hadolint --version
+#            hadolint Dockerfile
+#      - save_cache:
+#          paths:
+#            - ./venv
+#          key: linter
+
+#      # make lint
+#      - run:
+#          name: make lint
+#          command: |
+#            cd backend
+#            python3 -m venv venv
+#            . venv/bin/activate
+#            make install
+#            make lint
+#      - save_cache:
+#          paths:
+#            - ./venv
+#          key: linter
+
+  build-and-push-docker-image:
+    executor: docker
+    steps:
+      - checkout
+      # Creates a remote Docker environment configured to execute Docker commands.
+      - setup_remote_docker:
+          version: 20.10.14
+
+      - run:
+          name: Build docker image
+          command: |
+            cd backend
+            docker build --tag=$DOCKER_IMAGE:latest .
+            docker image ls
+
+      - run:
+          name: Push docker image to Docker Hub
+          command: |
+            echo "Push Image: $DOCKER_IMAGE, version: $IMAGE_VERSION to Docker Hub"
+            docker login -u "$DOCKER_HUB_USERNAME" -p "$DOCKER_HUB_PASSWORD"
+            docker tag $DOCKER_IMAGE $DOCKER_HUB_USERNAME/$DOCKER_IMAGE:$IMAGE_VERSION
+            docker push nhanct79/$DOCKER_IMAGE:$IMAGE_VERSION
+
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Install required dependencies
+          command: |
+            yum install -y tar gzip
+      - run:
+            name: Configure Network
+            command: |
+              pwd
+              echo ${ENVIRONMENT_NAME}
+              aws cloudformation deploy \
+                --region ${AWS_DEFAULT_REGION} \
+                --template-file cloudformation/network-infrastructure.yml \
+                --tags project=${ENVIRONMENT_NAME} \
+                --stack-name "${ENVIRONMENT_NAME}-network" \
+                --parameter-overrides file://cloudformation/network-parameters.json
+
+      - run:
+          name: Deploy Management Instances
+          command: |
+            aws cloudformation deploy \
+              --region ${AWS_DEFAULT_REGION} \
+              --template-file cloudformation/server-infrastructure.yml \
+              --tags project=${ENVIRONMENT_NAME} \
+              --stack-name "${ENVIRONMENT_NAME}-server" \
+              --parameter-overrides file://cloudformation/server-parameters.json \
+              --output text >> ~/temporary_deployment_log.txt
+
+      - run:
+          name: Deploy Cluster Infrastructure
+          no_output_timeout: 15m
+          command: |
+            aws cloudformation deploy \
+              --region ${AWS_DEFAULT_REGION} \
+              --template-file cloudformation/cluster-infrastructure.yml \
+              --tags project=${ENVIRONMENT_NAME} \
+              --stack-name "${ENVIRONMENT_NAME}-cluster" \
+              --parameter-overrides file://cloudformation/cluster-parameters.json \
+              --capabilities CAPABILITY_NAMED_IAM
+
+      - run:
+          name: Deploy NodeGroup
+          no_output_timeout: 15m
+          command: |
+            aws cloudformation deploy \
+              --region ${AWS_DEFAULT_REGION} \
+              --template-file cloudformation/nodegroup-infrastructure.yml \
+              --tags project=${ENVIRONMENT_NAME} \
+              --stack-name "${ENVIRONMENT_NAME}-nodegroup" \
+              --parameter-overrides file://cloudformation/nodegroup-parameters.json \
+              --capabilities CAPABILITY_NAMED_IAM
+
+      #sleep 6 min to wait for server instance to be ready
+      - run:
+          name: Sleep 2 mins to wait for deployment server be ready
+          no_output_timeout: 40m
+          command: |
+            date
+            sleep 2m
+
+      - run:
+          name: Expose back-end ip to ansible inventory
+          command: |
+            echo [management] > ~/inventory.txt
+            
+            aws ec2 describe-instances \
+              --region ${AWS_DEFAULT_REGION} \
+              --query 'Reservations[*].Instances[*].[PublicIpAddress]' \
+              --filters "Name=tag:Name,Values=${ENVIRONMENT_NAME}-management*" \
+              --output text >> ~/inventory.txt
+
+            echo "IPs: "
+            cat ~/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - inventory.txt
+            - temporary_deployment_log.txt
+
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["b3:6b:fe:a5:66:e5:4b:72:e3:5e:c1:98:04:4d:18:21"]
+
+      # Attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+
+      - run:
+          no_output_timeout: 30m
+          name: Configure server
+          # command: |
+          #   # Your code here
+          #   cd ansible
+          #   cat ~/inventory.txt
+          #   ansible-playbook -i ~/inventory.txt server-configuration.yml
+
+
+          command: |
+            echo "IPs:"
+            if grep -q "Nothing has been updated" ~/temporary_deployment_log.txt
+              then
+                cat ~/inventory.txt
+                echo "No update to instances"
+              else
+                cat ~/inventory.txt
+                cd ansible
+                ansible-playbook -i ~/inventory.txt server-configuration.yml
+              fi
+
+      # - destroy-environment
+      # config for failure job
+
+
+  configure-cluster:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["b3:6b:fe:a5:66:e5:4b:72:e3:5e:c1:98:04:4d:18:21"]
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install required dependencies
+          command: |
+            apk add --update ansible
+      - run:
+          name: Configure cluster
+          command: |
+            if grep -q "Nothing has been updated" ~/temporary_deployment_log.txt
+              then
+                cat ~/inventory.txt
+                echo "No update to instances"
+              else
+                cd ansible
+                cat ~/inventory.txt
+                ansible-playbook -i ~/inventory.txt cluster-configuration.yml
+              fi
+      - run:
+          name: Need sometime to wait for LoadBalancer be ready...
+          command: |
+            if grep -q "Nothing has been updated" ~/temporary_deployment_log.txt
+              then
+                cat ~/inventory.txt
+                echo "No update to instances"
+              else
+                cat ~/inventory.txt
+                echo "Please wait for 1 min..."
+                sleep 90
+              fi
+
+      - run:
+          name: Get Load Balancer DNS name
+          command: |
+            cd ansible
+            cat ~/inventory.txt
+            ansible-playbook -i ~/inventory.txt load-balancing-dns.yml
+            cat ~/lbl-dns.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - lbl-dns.txt
+
+  deploy-docker:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["b3:6b:fe:a5:66:e5:4b:72:e3:5e:c1:98:04:4d:18:21"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+      - run:
+          name: deploy image docker
+          no_output_timeout: 40m
+          command: |
+            cd ansible
+            cat ~/inventory.txt
+            ansible-playbook -i ~/inventory.txt deploy-app.yml
+
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/configuration-reference/#workflows
+workflows:
+  default:
+    jobs:
+      - build-backend
+      - scan-backend
+      - lint-check:
+          requires: [build-backend, scan-backend]
+      - build-and-push-docker-image:
+          requires: [build-backend, scan-backend, lint-check]
+          filters:
+            branches:
+              only: [ main ]
+      - deploy-infrastructure:
+          requires: [build-backend, scan-backend, lint-check, build-and-push-docker-image]
+          filters:
+            branches:
+              only: [ main ]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - configure-cluster:
+          requires: [build-and-push-docker-image, configure-infrastructure]
+      - deploy-docker:
+          requires: [configure-cluster]
